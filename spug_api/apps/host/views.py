@@ -25,7 +25,10 @@ class HostView(View):
             if not request.user.has_host_perm(host_id):
                 return json_response(error='无权访问该主机，请联系管理员')
             return json_response(Host.objects.get(pk=host_id))
-        hosts = Host.objects.filter(deleted_by_id__isnull=True)
+        if request.user.is_spuuer:
+            hosts = Host.objects.filter(deleted_by_id__isnull=True)
+        else:
+            hosts = Host.objects.filter(created_by_id=request.user.id,deleted_by_id__isnull=True)
         zones = [x['zone'] for x in hosts.order_by('zone').values('zone').distinct()]
         perms = [x.id for x in hosts] if request.user.is_supper else request.user.host_perms
         return json_response({'zones': zones, 'hosts': [x.to_dict() for x in hosts], 'perms': perms})
